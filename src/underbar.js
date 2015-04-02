@@ -7,6 +7,7 @@
   // seem very useful, but remember it--if a function needs to provide an
   // iterator when the user does not pass one in, this will be handy.
   _.identity = function(val) {
+    return val;
   };
 
   /**
@@ -37,6 +38,7 @@
   // Like first, but for the last elements. If n is undefined, return just the
   // last element.
   _.last = function(array, n) {
+    return n === undefined ? array[array.length - 1] : array.slice(n > array.length ? 0 : array.length - n, array.length);
   };
 
   // Call iterator(value, key, collection) for each element of collection.
@@ -45,6 +47,15 @@
   // Note: _.each does not have a return value, but rather simply runs the
   // iterator function over each item in the input collection.
   _.each = function(collection, iterator) {
+
+    if (collection instanceof Array) {
+      for (var i = 0; i < collection.length; i++)
+        iterator(collection[i], i, collection);
+    } else if (collection instanceof Object) {
+        for (var i in collection)
+          iterator(collection[i], i, collection);
+    }
+
   };
 
   // Returns the index at which value can be found in the array, or -1 if value
@@ -54,36 +65,62 @@
     // implemented for you. Instead of using a standard `for` loop, though,
     // it uses the iteration helper `each`, which you will need to write.
     var result = -1;
-
     _.each(array, function(item, index) {
-      if (item === target && result === -1) {
+      if (item === target && result === -1)
         result = index;
-      }
     });
-
     return result;
   };
 
   // Return all elements of an array that pass a truth test.
   _.filter = function(collection, test) {
+    var newCollection = [];
+    _.each(collection, function(element) {
+      if (test(element)) newCollection.push(element);
+    });
+    return newCollection;
   };
 
   // Return all elements of an array that don't pass a truth test.
   _.reject = function(collection, test) {
     // TIP: see if you can re-use _.filter() here, without simply
     // copying code in and modifying it
+    return _.filter(collection, function(element) {
+      return !test(element);
+    });
   };
 
   // Produce a duplicate-free version of the array.
-  _.uniq = function(array) {
+  _.uniq = function(array, isSorted, iterator) {
+    //apply the iterator to the array if at all applicable
+    var iteratedArray = [];
+    iterator === undefined ? iteratedArray = array : _.each(array, function(element) {
+      iteratedArray.push(iterator(element));
+    });
+    //create an array to hold values that the iterator has operated on
+    var seen = [];
+    //create array to be returned
+    var result = [];
+    //if sorted, perform optimal algorithm for a sorted array. else use the normal algorithm
+    _.each(iteratedArray, function(element, index) {
+      if (isSorted ? (!index || seen[seen.length - 1] !== element) : !(element in seen)) {
+        seen.push(element);
+        result.push(array[index]);
+      }
+    });
+    // Return the results of applying an iterator to each element.
+    return result;
   };
 
-
-  // Return the results of applying an iterator to each element.
   _.map = function(collection, iterator) {
     // map() is a useful primitive iteration function that works a lot
     // like each(), but in addition to running the operation on all
     // the members, it also maintains an array of results.
+    var mapped = [];
+    _.each(collection, function(element) {
+      mapped.push(iterator(element));
+    });
+    return mapped;
   };
 
   /*
@@ -125,6 +162,11 @@
   //   }); // should be 5, regardless of the iterator function passed in
   //          No accumulator is given so the first element is used.
   _.reduce = function(collection, iterator, accumulator) {
+    //go through each element in the collection
+    _.each(collection, function(element) {
+      accumulator === undefined ? accumulator = element : accumulator = iterator(accumulator, element);
+    });
+    return accumulator;
   };
 
   // Determine if the array or object contains a given value (using `===`).
